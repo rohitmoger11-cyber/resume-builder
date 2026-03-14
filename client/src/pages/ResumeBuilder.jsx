@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { dummyResumeData } from "../assets/assets";
 import { ArrowLeftIcon, Briefcase, FileText, GraduationCap, Sparkles, User ,FolderIcon, ChevronLeft ,ChevronRight } from "lucide-react";
 import PersonalInfoForm from "../components/PersonalInfoForm";
+import ResumePreview from "../components/ResumePreview";
 
 const ResumeBuilder = () => {
 
@@ -11,8 +12,8 @@ const ResumeBuilder = () => {
   const [resumeData, setResumeData] = useState({
     _id: "",
     title: "",
-    personalInfo: {},
-    professionalSummary: "",
+    personal_info: {},
+    professional_summary: "",
     experience: [],
     education: [],
     skills: [],
@@ -65,65 +66,69 @@ const ResumeBuilder = () => {
         </div>
       
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className=" grid lg:grid-cols-12 gap-8">
+        <div className="grid lg:grid-cols-12 gap-8">
           {/*left side - form*/}
           <div className="relative lg:col-span-5 rounded-lg overflow-hidden">
-            <div className="bg-white rounded-lg showdow-sm border border-gray-200 p-6 pt-1">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 pt-1">
               {/* progress bar using activeSectionIndex */}
               <hr className="absolute top-0 left-0 right-0 border-2 border-gray-200" />
               <hr className="absolute top-0 left-0 h-1 bg-gradient-to-r from-green-500 to-green-600 border-none transition-all duration-500"
               style={{width:`${activeSectionIndex*100/(sections.length - 1)}%`}} />
               {/* sections nav */}
-<div className="flex justify-between items-center mt-2 border-b border-gray-300 py-1">
+              <div className="flex justify-between items-center mt-2 border-b border-gray-300 py-1">
+              <div>
 
-  {activeSectionIndex > 0 && (
-    <button
-      onClick={() =>
-        setActiveSectionIndex((prevIndex) =>
-          Math.max(prevIndex - 1, 0)
-        )
-      }
-      className="flex items-center gap-1 p-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition-all"
-    >
-      <ChevronLeft className="size-4" />
-      Previous
-    </button>
-  )}
+              </div>
+              <div className="flex items-center">
+                {activeSectionIndex > 0 && (
+                  <button
+                    onClick={() =>
+                      setActiveSectionIndex((prevIndex) =>
+                        Math.max(prevIndex - 1, 0)
+                      )
+                    }
+                    className="flex items-center gap-1 p-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition-all"
+                  >
+                    <ChevronLeft className="size-4" />
+                    Previous
+                  </button>
+                )}
 
-  <button
-    onClick={() =>
-      setActiveSectionIndex((prevIndex) =>
-        Math.min(prevIndex + 1, sections.length - 1)
-      )
-    }
-    className={`flex items-center gap-1 p-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition-all ${
-      activeSectionIndex === sections.length - 1 && "opacity-50"
-    }`}
-    disabled={activeSectionIndex === sections.length - 1}
-  >
-    Next <ChevronRight className="size-4" />
-  </button>
+                <button
+                  onClick={() =>
+                    setActiveSectionIndex((prevIndex) =>
+                      Math.min(prevIndex + 1, sections.length - 1)
+                    )
+                  }
+                  className={`flex items-center gap-1 p-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition-all ${
+                    activeSectionIndex === sections.length - 1 && "opacity-50"
+                  }`}
+                  disabled={activeSectionIndex === sections.length - 1}
+                >
+                  Next <ChevronRight className="size-4" />
+                </button>
 
-</div>
+              </div>
+              </div>
 
               {/*Form Content*/}
               <div className="space-y-6">
                 {activeSection.id === "personal" && (
-                  <PersonalInfoForm data={resumeData.personalInfo} onChange={(data)=>setResumeData(prev=>({...prev,personalInfo:data}))} removeBackground={removeBackground} setRemoveBackground={setRemoveBackground} />
+                  <PersonalInfoForm data={resumeData.personal_info} onChange={(data)=>setResumeData(prev=>({...prev,personal_info:data}))} removeBackground={removeBackground} setRemoveBackground={setRemoveBackground} />
                 )}
-
               </div>
-              </div>
+            </div>
           </div>
 
-
           {/*right side - preview*/}
-          <div></div>
+          <div className='lg:col-span-7 max-lg:mt-6'>
+            <div>
+              {/*Buttons*/}
+            </div>
+            <ResumePreview data={resumeData} template={resumeData.template} accentColor={resumeData.accent_color} />
+          </div>
         </div>
-
-
-        </div>
-
+      </div>
     </div>
   );
 };
