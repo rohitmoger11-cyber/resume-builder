@@ -4,6 +4,10 @@ import { dummyResumeData } from "../assets/assets";
 import { ArrowLeftIcon, Briefcase, FileText, GraduationCap, Sparkles, User ,FolderIcon, ChevronLeft ,ChevronRight } from "lucide-react";
 import PersonalInfoForm from "../components/PersonalInfoForm";
 import ResumePreview from "../components/ResumePreview";
+import TemplateSelector from "../components/TemplateSelector";
+import AccentColorSelector from "../components/AccentColorSelector";
+import ProfessionalSummaryForm from "../components/ProfessionalSummaryForm";
+import ExperienceForm from "../components/ExperienceForm";
 
 const ResumeBuilder = () => {
 
@@ -76,7 +80,9 @@ const ResumeBuilder = () => {
               style={{width:`${activeSectionIndex*100/(sections.length - 1)}%`}} />
               {/* sections nav */}
               <div className="flex justify-between items-center mt-2 border-b border-gray-300 py-1">
-              <div>
+              <div className="flex gap-2">
+                <TemplateSelector selectedTemplate={resumeData.template} onChange={(template) => setResumeData(prev => ({ ...prev, template: template }))} />
+                <AccentColorSelector selectedColor={resumeData.accent_color} onChange={(color) => setResumeData(prev => ({ ...prev, accent_color: color }))} />
 
               </div>
               <div className="flex items-center">
@@ -115,6 +121,12 @@ const ResumeBuilder = () => {
               <div className="space-y-6">
                 {activeSection.id === "personal" && (
                   <PersonalInfoForm data={resumeData.personal_info} onChange={(data)=>setResumeData(prev=>({...prev,personal_info:data}))} removeBackground={removeBackground} setRemoveBackground={setRemoveBackground} />
+                )}
+                {activeSection.id === "summary" && (
+                  <ProfessionalSummaryForm data={resumeData.professional_summary} onChange={(data) => setResumeData(prev => ({ ...prev, professional_summary: data }))} setResumeData={setResumeData}/>
+                )}
+                {activeSection.id === "experience" && (
+                  <ExperienceForm data={resumeData.experience} onChange={(data) => setResumeData(prev => ({ ...prev, experience: data }))} />
                 )}
               </div>
             </div>

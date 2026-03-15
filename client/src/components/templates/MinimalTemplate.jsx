@@ -12,8 +12,8 @@ const MinimalTemplate = ({ data, accentColor }) => {
     return (
         <div className="max-w-4xl mx-auto p-8 bg-white text-gray-900 font-light">
             {/* Header */}
-            <header className="mb-10">
-                <h1 className="text-4xl font-thin mb-4 tracking-wide">
+            <header className="mb-10 pb-6 border-b" style={{ borderColor: accentColor }}>
+                <h1 className="text-4xl font-thin mb-4 tracking-wide" style={{ color: accentColor }}>
                     {data.personal_info?.full_name || "Your Name"}
                 </h1>
 
