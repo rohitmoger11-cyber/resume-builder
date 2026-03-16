@@ -93,18 +93,19 @@ const ClassicTemplate = ({ data, accentColor }) => {
             )}
 
             {/* Projects */}
-            {data.project && data.project.length > 0 && (
+            {data.projects && data.projects.length > 0 && (
                 <section className="mb-6">
                     <h2 className="text-xl font-semibold mb-4" style={{ color: accentColor }}>
                         PROJECTS
                     </h2>
 
                     <ul className="space-y-3 ">
-                        {data.project.map((proj, index) => (
-                            <div key={index} className="flex justify-between items-start border-l-3 border-gray-300 pl-6">
+                        {data.projects.map((proj, index) => (
+                            <div key={index} className="flex justify-between items-start border-l-3 pl-4" style={{ borderColor: accentColor }}>
                                 <div>
-                                    <li className="font-semibold text-gray-800 ">{proj.name}</li>
-                                    <p className="text-gray-600">{proj.description}</p>
+                                    <li className="font-semibold text-gray-800 ">{proj.project_name}</li>
+                                    {proj.project_type && <p className="text-gray-600 font-medium">{proj.project_type}</p>}
+                                    {proj.description && <p className="text-gray-700 leading-relaxed whitespace-pre-line">{proj.description}</p>}
                                 </div>
                             </div>
                         ))}
