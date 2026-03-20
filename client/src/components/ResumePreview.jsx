@@ -23,10 +23,11 @@ const ResumePreview = ({ data, template, accentColor, classes = "" }) => {
   };
 
   return (
-    <div className="w-full bg-gray-100 flex justify-center">
+    <div className="w-full flex justify-center py-8">
       <div
         id="resume-preview"
-        className={"border border-gray-200 print:shadow-none print:border-none " + classes}
+        className="w-full border border-gray-300 bg-white shadow-lg"
+        style={{ maxWidth: "8.5in", minHeight: "11in" }}
       >
         {renderTemplate()}
       </div>
@@ -38,32 +39,48 @@ const ResumePreview = ({ data, template, accentColor, classes = "" }) => {
         }
 
         @media print {
+          * {
+            margin: 0;
+            padding: 0;
+          }
+
           html,
           body {
             width: 8.5in;
             height: 11in;
+            margin: 0;
+            padding: 0;
+            background: white;
             overflow: hidden;
           }
 
           body * {
-            visibility: hidden;
-          }
-
-          #resume-preview,
-          #resume-preview * {
-            visibility: visible;
+            visibility: hidden !important;
           }
 
           #resume-preview {
-            position: absolute;
+            visibility: visible !important;
+            position: fixed;
             left: 0;
             top: 0;
-            width: 100%;
-            height: auto;
-            margin: 0;
-            padding: 0;
+            width: 8.5in;
+            height: 11in;
+            margin: 0 !important;
+            padding: 0 !important;
             box-shadow: none !important;
             border: none !important;
+            background: white;
+            overflow: hidden;
+            page-break-after: avoid;
+          }
+
+          #resume-preview * {
+            visibility: visible !important;
+          }
+
+          /* Ensure all content fits in one page */
+          #resume-preview > div {
+            page-break-inside: avoid;
           }
         }
       `}</style>
