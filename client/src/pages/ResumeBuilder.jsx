@@ -24,6 +24,7 @@ const ResumeBuilder = () => {
     experience: [],
     education: [],
     skills: [],
+    projects: [],
     template: "classic",
     accent_color: "#3B82F6",
     public: false,
@@ -42,7 +43,17 @@ const ResumeBuilder = () => {
         // Try to load from localStorage
         const storedResume = localStorage.getItem(`resume_${resumeId}`);
         if (storedResume) {
-          setResumeData(JSON.parse(storedResume));
+          const parsedResume = JSON.parse(storedResume);
+          setResumeData(parsedResume);
+          document.title = parsedResume.title || "Resume Builder";
+        } else {
+          // Initialize new resume with the resumeId
+          setResumeData(prev => ({
+            ...prev,
+            _id: resumeId,
+            title: "Untitled Resume"
+          }));
+          document.title = "Untitled Resume";
         }
       }
     }

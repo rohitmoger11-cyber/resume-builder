@@ -23,14 +23,59 @@ const Dashboard = () => {
 
   const createResume = async (event) => {
     event.preventDefault();
-    setShowCreateResume(false)
-    navigate(`/app/builder/res123`)
+    if (!title.trim()) {
+      alert("Please enter a resume title");
+      return;
+    }
+    const newResumeId = `resume_${Date.now()}`;
+    // Save the title to be picked up by ResumeBuilder
+    localStorage.setItem(`resume_${newResumeId}`, JSON.stringify({
+      _id: newResumeId,
+      title: title,
+      personal_info: {},
+      professional_summary: "",
+      experience: [],
+      education: [],
+      skills: [],
+      projects: [],
+      template: "classic",
+      accent_color: "#3B82F6",
+      public: false,
+    }));
+    setShowCreateResume(false);
+    setTitle("");
+    navigate(`/app/builder/${newResumeId}`);
   };
 
   const uploadResume = async (event) => {
     event.preventDefault();
-    setShowUploadResume(false)
-    navigate(`/app/builder/res123`)   
+    if (!title.trim()) {
+      alert("Please enter a resume title");
+      return;
+    }
+    if (!resume) {
+      alert("Please select a resume file");
+      return;
+    }
+    const newResumeId = `resume_${Date.now()}`;
+    // Save initial resume data to localStorage
+    localStorage.setItem(`resume_${newResumeId}`, JSON.stringify({
+      _id: newResumeId,
+      title: title,
+      personal_info: {},
+      professional_summary: "",
+      experience: [],
+      education: [],
+      skills: [],
+      projects: [],
+      template: "classic",
+      accent_color: "#3B82F6",
+      public: false,
+    }));
+    setShowUploadResume(false);
+    setTitle("");
+    setResume(null);
+    navigate(`/app/builder/${newResumeId}`);   
   };
   
   const editTitle = async (event) => {
