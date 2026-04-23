@@ -36,7 +36,7 @@ export const registerUser = async (req, res) => {
        const token = generateToken(newUser._id);
        newUser.password = undefined; //hide password in response
 
-       return res.status(201).json({message:"User created sucessfully",token,user:newUser})
+       return res.status(201).json({message:"User created successfully",token,user:newUser})
     } catch (error) {
         return res.status(400).json({message: "Error creating user", error: error.message});
 
@@ -68,7 +68,7 @@ export const loginUser = async (req, res) => {
 
        return res.status(200).json({message:"User logged in successfully",token,user})
     } catch (error) {
-        return res.status(400).json({message: "Error creating user", error: error.message});
+        return res.status(400).json({message: "Error logging in", error: error.message});
 
     }
 }
@@ -90,7 +90,21 @@ export const getUserById = async (req, res) => {
         user.password = undefined; //hide password in response
        return res.status(200).json({message: "User found", user})
     } catch (error) {
-        return res.status(400).json({message: "Error creating user", error: error.message});
+        return res.status(400).json({message: "Error fetching user", error: error.message});
 
+    }
+}
+
+//controller for getting user resumes
+//GET /api/users/resumes
+export const getUserResumes = async (req, res) => {
+    try {
+        const userId=req.userId;
+
+        //return user resumes
+        const resumes = await Resume.find({userId})
+        return res.status(200).json({resumes})
+    } catch (error) {
+        return res.status(400).json({message: "Error fetching resumes", error: error.message})
     }
 }
