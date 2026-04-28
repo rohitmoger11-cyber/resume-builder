@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
+import { useSelector } from "react-redux";
 import { dummyResumeData } from "../assets/assets";
+import api from "../configes/api";
 import { ArrowLeftIcon, Briefcase, FileText, GraduationCap, Sparkles, User ,FolderIcon, ChevronLeft ,ChevronRight, Share2Icon, EyeIcon, EyeOffIcon, DownloadIcon } from "lucide-react";
 import PersonalInfoForm from "../components/PersonalInfoForm";
 import ResumePreview from "../components/ResumePreview";
@@ -15,6 +17,7 @@ import SkillsForm from "../components/SkillsForm";
 const ResumeBuilder = () => {
 
   const { resumeId } = useParams();
+  const { token } = useSelector(state => state.auth);
 
   const [resumeData, setResumeData] = useState({
     _id: "",
@@ -30,8 +33,9 @@ const ResumeBuilder = () => {
     public: false,
   });
 
-  const loadExistingResume = () => {
+  const loadExistingResume = async () => {
     if (resumeId && resumeId !== ":resumeId") {
+      // First check dummyResumeData
       const resume = dummyResumeData.find(
         (resume) => resume._id === resumeId
       );
@@ -39,22 +43,37 @@ const ResumeBuilder = () => {
       if (resume) {
         setResumeData(resume);
         document.title = resume.title;
-      } else {
-        // Try to load from localStorage
-        const storedResume = localStorage.getItem(`resume_${resumeId}`);
-        if (storedResume) {
-          const parsedResume = JSON.parse(storedResume);
-          setResumeData(parsedResume);
-          document.title = parsedResume.title || "Resume Builder";
-        } else {
-          // Initialize new resume with the resumeId
-          setResumeData(prev => ({
-            ...prev,
-            _id: resumeId,
-            title: "Untitled Resume"
-          }));
-          document.title = "Untitled Resume";
+        return;
+      }
+
+      // Try to fetch from API (for database resumes)
+      if (token && !resumeId.startsWith("resume_")) {
+        try {
+          const { data } = await api.get(`resumes/get/${resumeId}`, {
+            headers: { Authorization: token }
+          });
+          setResumeData(data.resume);
+          document.title = data.resume.title || "Resume Builder";
+          return;
+        } catch (error) {
+          console.log("Could not fetch from API, trying localStorage");
         }
+      }
+
+      // Try to load from localStorage
+      const storedResume = localStorage.getItem(`resume_${resumeId}`);
+      if (storedResume) {
+        const parsedResume = JSON.parse(storedResume);
+        setResumeData(parsedResume);
+        document.title = parsedResume.title || "Resume Builder";
+      } else {
+        // Initialize new resume with the resumeId
+        setResumeData(prev => ({
+          ...prev,
+          _id: resumeId,
+          title: "Untitled Resume"
+        }));
+        document.title = "Untitled Resume";
       }
     }
   };
@@ -78,7 +97,7 @@ const ResumeBuilder = () => {
 
   useEffect(() => {
     loadExistingResume();
-  }, [resumeId]);
+  }, [resumeId, token]);
 
   const changeResumeVisibility= async () => {
     setResumeData({...resumeData,public:!resumeData.public})

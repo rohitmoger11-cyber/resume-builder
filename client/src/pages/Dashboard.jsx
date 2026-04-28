@@ -3,8 +3,15 @@ import { FilePenLineIcon, PencilIcon, PlusIcon, TrashIcon, UploadCloud, UploadCl
 import { useState , useEffect } from "react";
 import {dummyResumeData} from '../assets/assets'
 import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import api from "../configes/api";
+import { toast } from "react-hot-toast";
+import pdfToText from "react-pdftotext";
+
 
 const Dashboard = () => {
+
+  const {user,token}=useSelector(state=>state.auth)
 
   const colors=["#9333ea","#97706","#dc2626","#0284c7","#16a34a"]
   const [allResumes, setAllResumes] = useState([])
@@ -14,6 +21,7 @@ const Dashboard = () => {
   const [resume, setResume] = useState(null)
   const [editResumeId, setEditResumeId] = useState("")
 
+  const [isLoading, setIsLoading] = useState(false)
   const navigate=useNavigate()
 
 
@@ -22,60 +30,69 @@ const Dashboard = () => {
   }
 
   const createResume = async (event) => {
-    event.preventDefault();
-    if (!title.trim()) {
-      alert("Please enter a resume title");
-      return;
-    }
-    const newResumeId = `resume_${Date.now()}`;
-    // Save the title to be picked up by ResumeBuilder
-    localStorage.setItem(`resume_${newResumeId}`, JSON.stringify({
-      _id: newResumeId,
-      title: title,
-      personal_info: {},
-      professional_summary: "",
-      experience: [],
-      education: [],
-      skills: [],
-      projects: [],
-      template: "classic",
-      accent_color: "#3B82F6",
-      public: false,
-    }));
-    setShowCreateResume(false);
-    setTitle("");
-    navigate(`/app/builder/${newResumeId}`);
+     try {
+      event.preventDefault();
+      const {data} =await api.post('resumes/create',{title},{headers: {Authorization:token}})
+      setAllResumes([...allResumes,data.resume])
+      setTitle("")
+      setShowCreateResume(false)
+      navigate(`/app/builder/${data.resume._id}`)
+     } catch (error) {
+      toast.error(error?.response?.data?.message || error.message)
+      // Fallback to localStorage if API fails
+      const newResumeId = `resume_${Date.now()}`;
+      localStorage.setItem(`resume_${newResumeId}`, JSON.stringify({
+        _id: newResumeId,
+        title: title,
+        personal_info: {},
+        professional_summary: "",
+        experience: [],
+        education: [],
+        skills: [],
+        projects: [],
+        template: "classic",
+        accent_color: "#3B82F6",
+        public: false,
+      }));
+      setShowCreateResume(false);
+      setTitle("");
+      navigate(`/app/builder/${newResumeId}`);
+     }
   };
 
   const uploadResume = async (event) => {
     event.preventDefault();
-    if (!title.trim()) {
-      alert("Please enter a resume title");
-      return;
+    setIsLoading(true);
+    try {
+      const resumeText = await pdfToText(resume);
+      const {data} = await api.post('/api/ai/upload-resume',{title,resumeText},{headers: {Authorization:token}})
+      setTitle("");
+      setResume(null);
+      setShowUploadResume(false);
+      navigate(`/app/builder/${data.resume._id}`)
+    } catch (error) {
+      toast.error(error?.response?.data?.message || error.message)
+      // Fallback to localStorage if API fails
+      const newResumeId = `resume_${Date.now()}`;
+      localStorage.setItem(`resume_${newResumeId}`, JSON.stringify({
+        _id: newResumeId,
+        title: title,
+        personal_info: {},
+        professional_summary: "",
+        experience: [],
+        education: [],
+        skills: [],
+        projects: [],
+        template: "classic",
+        accent_color: "#3B82F6",
+        public: false,
+      }));
+      setShowUploadResume(false);
+      setTitle("");
+      setResume(null);
+      navigate(`/app/builder/${newResumeId}`);
     }
-    if (!resume) {
-      alert("Please select a resume file");
-      return;
-    }
-    const newResumeId = `resume_${Date.now()}`;
-    // Save initial resume data to localStorage
-    localStorage.setItem(`resume_${newResumeId}`, JSON.stringify({
-      _id: newResumeId,
-      title: title,
-      personal_info: {},
-      professional_summary: "",
-      experience: [],
-      education: [],
-      skills: [],
-      projects: [],
-      template: "classic",
-      accent_color: "#3B82F6",
-      public: false,
-    }));
-    setShowUploadResume(false);
-    setTitle("");
-    setResume(null);
-    navigate(`/app/builder/${newResumeId}`);   
+    setIsLoading(false);
   };
   
   const editTitle = async (event) => {
@@ -145,10 +162,7 @@ const Dashboard = () => {
             <XIcon className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 cursor-pointer transition-colors" onClick={()=>{setShowCreateResume(false); setTitle("")}}/>
             </div>
           </form>
-        )
-        }
-
-
+        )}
         {showUploadResume && (
           <form onSubmit={uploadResume} onClick={()=> setShowUploadResume(false)}  className="fixed inset-0 bg-black/70 backdrop-blur flex bg-opacity-50 z-10  flex items-center justify-center">
           <div onClick={e=>e.stopPropagation()} className="relative bg-slate-50 border shadow-mb rounded-lg w-full max-w-sm p-6">
@@ -178,9 +192,7 @@ const Dashboard = () => {
             <XIcon className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 cursor-pointer transition-colors" onClick={()=>{setShowUploadResume(false); setTitle("")}}/>
             </div>
           </form>
-        )
-        }
-
+        )}
         {editResumeId && (
           <form onSubmit={editTitle} onClick={()=> setEditResumeId("")}  className="fixed inset-0 bg-black/70 backdrop-blur flex bg-opacity-50 z-10  flex items-center justify-center">
           <div onClick={e=>e.stopPropagation()} className="relative bg-slate-50 border shadow-mb rounded-lg w-full max-w-sm p-6">
@@ -192,10 +204,8 @@ const Dashboard = () => {
             <XIcon className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 cursor-pointer transition-colors" onClick={()=>{setEditResumeId(""); setTitle("")}}/>
             </div>
           </form>
-        )
-        }
-
-        </div>
+        )}
+      </div>
     </div>
   )
 }
