@@ -83,28 +83,77 @@ export const getPublicResumeById = async (req, res) => {
 export const updateResume = async (req, res) => {
     try {
         const userId=req.userId;
-        const {resumeId,resumeData,removeBackground}=req.body;
+        const {resumeId}=req.params;
+        let {resumeData,removeBackground}=req.body;
         const image=req.file;
 
-        let resumeDataCopy=JSON.parse(resumeData);
+        if(!resumeData){
+            return res.status(400).json({message: "resumeData is required"})
+        }
+
+        // Parse resumeData if it's a string (from FormData)
+        if(typeof resumeData === 'string'){
+            resumeData = JSON.parse(resumeData);
+        }
+
+        let resumeDataCopy=JSON.parse(JSON.stringify(resumeData));
 
         if (image) {
-            
-            const imageBufferData=fs.createReadStream(image.path);
+            try {
+                // Read file as buffer for ImageKit
+                const fileBuffer = fs.readFileSync(image.path);
+                
+                // Build transformation string
+                const transformationString = removeBackground 
+                    ? 'w-300,h-300,fo-face,z-0.75,e-bgremove' 
+                    : 'w-300,h-300,fo-face,z-0.75';
+                
+                try {
+                    // Try to upload to ImageKit
                     const response = await imagekit.upload({   
-                                    file: imageBufferData,
-                                    fileName: 'resume.jpg',
-                                    folder:'user-resumes',
-                                    transformation: {
-                                        pre:'w-300,h-300,fo-face,z-0.75'+
-                                        (removeBackground ? 'e-bgremove' : '')
-                                    }
+                        file: fileBuffer,
+                        fileName: image.originalname || 'resume.jpg',
+                        folder: 'user-resumes',
+                        overwriteFile: false,
+                        transformation: {
+                            pre: transformationString
+                        }
                     });
-                    resumeDataCopy.personal_info.image=response.url;
+                    
+                    resumeDataCopy.personal_info.image = response.url;
+                    console.log("Image uploaded to ImageKit:", response.url);
+                } catch (kitError) {
+                    // Fallback to local storage if ImageKit fails
+                    console.warn("ImageKit upload failed, using local storage:", kitError.message);
+                    const imageUrl = `${req.protocol}://${req.get('host')}/uploads/${image.filename}`;
+                    resumeDataCopy.personal_info.image = imageUrl;
                 }
+                
+                // Clean up temporary file
+                try {
+                    fs.unlinkSync(image.path);
+                } catch (unlinkErr) {
+                    console.error("Error deleting temporary file:", unlinkErr.message);
+                }
+            } catch (imageError) {
+                console.error("Image handling error:", imageError);
+                
+                // Clean up temporary file even on error
+                try {
+                    fs.unlinkSync(image.path);
+                } catch (unlinkErr) {
+                    console.error("Error deleting temporary file:", unlinkErr.message);
+                }
+                
+                return res.status(400).json({
+                    message: "Failed to process image", 
+                    error: imageError.message
+                })
+            }
+        }
             
 
-        const resume=await Resume.findByIdAndUpdate({userId, _id: resumeId}, resumeDataCopy, {new: true})
+        const resume=await Resume.findOneAndUpdate({userId, _id: resumeId}, resumeDataCopy, {new: true})
         return res.status(200).json({message: "Resume updated successfully", resume})
     } catch (error) {
         return res.status(400).json({message:error.message})

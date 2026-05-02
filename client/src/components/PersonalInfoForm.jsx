@@ -7,6 +7,18 @@ const PersonalInfoForm = ({ data, onChange, removeBackground, setRemoveBackgroun
     onChange({ ...data, [field]: value });
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const base64String = event.target.result;
+        handleChange("image", base64String);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const fields=[
     { key:"full_name", label:"Full Name", icon:User, type:"text", required:true },
     { key:"email", label:"Email Address", icon:Mail, type:"email", required:true },
@@ -35,11 +47,7 @@ const PersonalInfoForm = ({ data, onChange, removeBackground, setRemoveBackgroun
           {data?.image ? (
 
             <img
-              src={
-                typeof data.image === "string"
-                  ? data.image
-                  : URL.createObjectURL(data.image)
-              }
+              src={data.image}
               alt="user-image"
               className="w-16 h-16 rounded-full object-cover mt-5 ring ring-slate-300 hover:opacity-80"
             />
@@ -57,12 +65,12 @@ const PersonalInfoForm = ({ data, onChange, removeBackground, setRemoveBackgroun
             type="file"
             accept="image/jpeg,image/png"
             className="hidden"
-            onChange={(e) => handleChange("image", e.target.files[0])}
+            onChange={handleImageChange}
           />
 
         </label>
 
-        {typeof data?.image === "object" && (
+        {data?.image && (
 
           <div className="flex flex-col gap-1 pl-4 text-sm">
 

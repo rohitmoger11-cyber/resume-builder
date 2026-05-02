@@ -13,6 +13,7 @@ import ExperienceForm from "../components/ExperienceForm";
 import EducationForm from "../components/EducationForm";
 import ProjectForm from "../components/ProjectForm";
 import SkillsForm from "../components/SkillsForm";
+import toast from "react-hot-toast";
 
 const ResumeBuilder = () => {
 
@@ -34,47 +35,15 @@ const ResumeBuilder = () => {
   });
 
   const loadExistingResume = async () => {
-    if (resumeId && resumeId !== ":resumeId") {
-      // First check dummyResumeData
-      const resume = dummyResumeData.find(
-        (resume) => resume._id === resumeId
-      );
-
-      if (resume) {
-        setResumeData(resume);
-        document.title = resume.title;
-        return;
+    try {
+      const { data } = await api.get(`resumes/get/${resumeId}`, { headers: { Authorization: token } });
+      if(data.resume){
+        setResumeData(data.resume);
+        document.title=data.resume.title;
       }
 
-      // Try to fetch from API (for database resumes)
-      if (token && !resumeId.startsWith("resume_")) {
-        try {
-          const { data } = await api.get(`resumes/get/${resumeId}`, {
-            headers: { Authorization: token }
-          });
-          setResumeData(data.resume);
-          document.title = data.resume.title || "Resume Builder";
-          return;
-        } catch (error) {
-          console.log("Could not fetch from API, trying localStorage");
-        }
-      }
-
-      // Try to load from localStorage
-      const storedResume = localStorage.getItem(`resume_${resumeId}`);
-      if (storedResume) {
-        const parsedResume = JSON.parse(storedResume);
-        setResumeData(parsedResume);
-        document.title = parsedResume.title || "Resume Builder";
-      } else {
-        // Initialize new resume with the resumeId
-        setResumeData(prev => ({
-          ...prev,
-          _id: resumeId,
-          title: "Untitled Resume"
-        }));
-        document.title = "Untitled Resume";
-      }
+    } catch (error) {
+      console.log(error.message)
     }
   };
 
@@ -100,7 +69,20 @@ const ResumeBuilder = () => {
   }, [resumeId, token]);
 
   const changeResumeVisibility= async () => {
-    setResumeData({...resumeData,public:!resumeData.public})
+    try {
+       const formData=new FormData();
+    formData.append("resumeData", JSON.stringify({ public: !resumeData.public }));
+
+    const {data}=await api.put(`resumes/update/${resumeId}`, formData, {headers: {Authorization: token}})
+
+    setResumeData({...resumeData, public: !resumeData.public})
+    toast.success(data.message)
+      
+    } catch (error) {
+      toast.error("Error saving resume:",error);
+    }
+
+
   }
   const handleShare=()=>{
     // Use resumeId or generate a unique ID if it doesn't exist
@@ -131,6 +113,8 @@ const downloadResume=()=>{
   }, 100);
 }
 
+
+
 const handleSaveChanges = () => {
   setToastMessage("✓ Changes saved successfully!");
   setShowToast(true);
@@ -139,6 +123,41 @@ const handleSaveChanges = () => {
   setTimeout(() => {
     setShowToast(false);
   }, 3000);
+}
+
+const saveResume=async () => {
+  try {
+    let updatedResumeData=structuredClone(resumeData);
+    
+    // Save image to localStorage if it's a base64 string
+    if(updatedResumeData.personal_info?.image && typeof updatedResumeData.personal_info.image === "string" && updatedResumeData.personal_info.image.startsWith("data:")) {
+      // Image is already base64, keep it as is for localStorage
+      localStorage.setItem(`resume_${resumeId}_image`, updatedResumeData.personal_info.image);
+    }
+
+    let config = {
+      headers: { Authorization: token }
+    };
+
+    // Always use plain JSON - no FormData needed
+    const payload = {
+      resumeData: updatedResumeData,
+      ...(removeBackground && { removeBackground: "yes" })
+    };
+
+    const {data}=await api.put(`resumes/update/${resumeId}`, payload, config)
+
+    console.log("Save response:", data);
+    
+    if(data.resume){
+      setResumeData(data.resume);
+    }
+    
+    return data.message || "Resume saved successfully!";
+  } catch (error) {
+    console.error("Error saving resume:", error.response?.data || error.message);
+    throw error;
+  }
 }
 
   return (
@@ -246,7 +265,14 @@ const handleSaveChanges = () => {
                   <SkillsForm data={resumeData.skills} onChange={(data) => setResumeData(prev => ({ ...prev, skills: data }))} />
                 )}
               </div>
-              <button onClick={handleSaveChanges} className="bg-gradient-to-br from-green-100 to-green-200 ring-green-300 text-green-600 ring hover:ring-green-400 transition-all rounded-md px-6 py-2 mt-6 text-sm">
+              <button onClick={async () => {
+                try {
+                  await saveResume();
+                  toast.success("Resume saved successfully!");
+                } catch (error) {
+                  toast.error("Failed to save resume");
+                }
+              }} className="bg-gradient-to-br from-green-100 to-green-200 ring-green-300 text-green-600 ring hover:ring-green-400 transition-all rounded-md px-6 py-2 mt-6 text-sm">
                 Save Changes
               </button>
             </div>
