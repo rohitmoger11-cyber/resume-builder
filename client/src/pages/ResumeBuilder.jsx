@@ -38,6 +38,11 @@ const ResumeBuilder = () => {
     try {
       const { data } = await api.get(`resumes/get/${resumeId}`, { headers: { Authorization: token } });
       if(data.resume){
+        // Load image from localStorage if it exists
+        const savedImage = localStorage.getItem(`resume_${resumeId}_image`);
+        if(savedImage){
+          data.resume.personal_info.image = savedImage;
+        }
         setResumeData(data.resume);
         document.title=data.resume.title;
       }
@@ -131,15 +136,16 @@ const saveResume=async () => {
     
     // Save image to localStorage if it's a base64 string
     if(updatedResumeData.personal_info?.image && typeof updatedResumeData.personal_info.image === "string" && updatedResumeData.personal_info.image.startsWith("data:")) {
-      // Image is already base64, keep it as is for localStorage
+      // Image is already base64, keep it in localStorage and remove from database payload
       localStorage.setItem(`resume_${resumeId}_image`, updatedResumeData.personal_info.image);
+      delete updatedResumeData.personal_info.image;
     }
 
     let config = {
       headers: { Authorization: token }
     };
 
-    // Always use plain JSON - no FormData needed
+    // Send JSON payload without base64 image (image is in localStorage)
     const payload = {
       resumeData: updatedResumeData,
       ...(removeBackground && { removeBackground: "yes" })
@@ -150,6 +156,11 @@ const saveResume=async () => {
     console.log("Save response:", data);
     
     if(data.resume){
+      // Restore image from localStorage after server returns
+      const savedImage = localStorage.getItem(`resume_${resumeId}_image`);
+      if(savedImage){
+        data.resume.personal_info.image = savedImage;
+      }
       setResumeData(data.resume);
     }
     

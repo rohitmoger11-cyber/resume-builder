@@ -1,7 +1,13 @@
-import { Briefcase, Plus, Trash2, Wand2 } from "lucide-react";
-import React from "react";
+import { Briefcase, Plus, Sparkle, Trash2, Loader2 } from "lucide-react";
+import React, { useState } from "react";
+import toast from "react-hot-toast";
+import { useSelector } from "react-redux";
+import api from "../configes/api";
 
 const ExperienceForm = ({data, onChange}) => {
+
+    const {token}=useSelector(state=>state.auth)
+    const [generatingIndex,setGeneratingIndex]=useState(-1)
 
     const AddExperience = () => {
         const newExperience = {
@@ -25,6 +31,21 @@ const ExperienceForm = ({data, onChange}) => {
         updated[index] = { ...updated[index], [field]: value };
         onChange(updated);
     };
+
+    const generateDescription = async (index) => {
+        setGeneratingIndex(index)
+        const experience = data[index];
+        const prompt = `enhance this job description "${experience.description}" for the position of ${experience.position} at ${experience.company}`;
+        try {
+            const response = await api.post('/ai/enhance-job-desc',{userContent: prompt},{headers: {Authorization: token}})
+            updateExperience(index, "description", response.data.enhancedContent)
+            toast.success("Job description enhanced!")
+        } catch (error) {
+           toast.error(error.response?.data?.message || error.message) 
+        }finally{
+            setGeneratingIndex(-1)
+        }
+    }
 
     return (
         <div className="space-y-6">
@@ -118,10 +139,15 @@ const ExperienceForm = ({data, onChange}) => {
                                 <div className="flex items-center justify-between mb-2">
                                     <label className="text-sm font-semibold text-gray-900">Job Description</label>
                                     <button 
-                                        className="flex items-center gap-1 text-sm text-purple-600 hover:text-purple-700"
-                                        disabled
+                                        onClick={()=> generateDescription(index)} 
+                                        disabled={generatingIndex === index || !experience.position || !experience.company}
+                                        className="flex items-center gap-1 text-sm text-purple-600 hover:text-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                        <Wand2 className="size-3" />
+                                        {generatingIndex === index ? (
+                                            <Loader2 className="size-3 animate-spin" />
+                                        ) : (
+                                            <Sparkle className="w-3 h-3" />
+                                        )}
                                         Enhance with AI
                                     </button>
                                 </div>
