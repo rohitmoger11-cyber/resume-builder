@@ -13,20 +13,20 @@ export const enhanceResumeProSummary = async (req, res) => {
             return res.status(400).json({message: "missing required fields"})
         }
         
-        const response=await ai.chat.completions.create({
-              model: process.env.OPENAI_MODEL,
-             messages: [
-                  {   role: "system",
-                      content: "You are an expert in resume writing.Your task is to enhance the professional summary of a resume. The summary should be 1-2 sentences also highlight key skills, experiences and carrer objectives.Make it compelling and ATS-friendly. and only return text no option or anything else."}, 
-                  
-         {
-            role: "user",
-            content: userContent,
-        },
-    ],
-})
-   const enhancedContent=response.choices[0].message.content;
-   return res.status(200).json({enhancedContent})
+        const model = ai.getGenerativeModel({ model: process.env.OPENAI_MODEL });
+        
+        const response = await model.generateContent({
+            contents: [{
+                role: "user",
+                parts: [{
+                    text: userContent
+                }]
+            }],
+            systemInstruction: "You are an expert in resume writing. Your task is to enhance the professional summary of a resume. The summary should be 1-2 sentences also highlight key skills, experiences and career objectives. Make it compelling and ATS-friendly. Only return text, no options or anything else."
+        });
+
+        const enhancedContent = response.response.text();
+        return res.status(200).json({enhancedContent})
     } catch (error) {
         return res.status(400).json({message:error.message})
     }
@@ -43,20 +43,20 @@ export const enhanceJobDescription = async (req, res) => {
             return res.status(400).json({message: "missing required fields"})
         }
         
-        const response=await ai.chat.completions.create({
-              model: process.env.OPENAI_MODEL,
-             messages: [
-                  {   role: "system",
-                      content: "You are an expert in resume writing.Your task is to enhance the job description of a resume. The description should be 1-2 sentences and highlighting key responsibilities and achievements.Use action verbs and quantifiable results when possible. Make it compelling and ATS-friendly. and only return text no option or anything else."}, 
-                  
-         {
-            role: "user",
-            content: userContent,
-        },
-    ],
-})
-   const enhancedContent=response.choices[0].message.content;
-   return res.status(200).json({enhancedContent})
+        const model = ai.getGenerativeModel({ model: process.env.OPENAI_MODEL });
+        
+        const response = await model.generateContent({
+            contents: [{
+                role: "user",
+                parts: [{
+                    text: userContent
+                }]
+            }],
+            systemInstruction: "You are an expert in resume writing. Your task is to enhance the job description of a resume. The description should be 1-2 sentences and highlighting key responsibilities and achievements. Use action verbs and quantifiable results when possible. Make it compelling and ATS-friendly. Only return text, no options or anything else."
+        });
+
+        const enhancedContent = response.response.text();
+        return res.status(200).json({enhancedContent})
     } catch (error) {
         return res.status(400).json({message:error.message})
     }
@@ -74,64 +74,63 @@ export const uploadResume = async (req, res) => {
             return res.status(400).json({message: "missing required fields"})
         }
 
-        const systemPrompt="You are an expert AI agent to extract data from resumes."
+        const systemPrompt="You are an expert AI agent to extract data from resumes. Return only valid JSON, no additional text.";
 
         const userPrompt=`extract data from resume:${resumeText}
         
-        Provide data in the JSON format with not additional text before or after :
+        Provide data in the JSON format with no additional text before or after:
         {
-        proffesional_summary: {type: String, default: ""},
-    skills:[{type:String}],
-    personal_info: {
-        image: {type: String, default: ""},
-        full_name: {type: String, default: ""},
-        profession: {type: String, default: ""},
-        email: {type: String, default: ""},
-        phone: {type: String, default: ""},
-        location: {type: String, default: ""},
-        linkedin: {type: String, default: ""},
-        website: {type: String, default: ""},
-    },
-    experience: [{
-        company: {type: String},
-        position: {type: String},
-        start_date: {type: Date},
-        end_date: {type: Date},
-        description: {type: String},
-        is_current:{type:Boolean},
-    }],
-       project: [{
-        name: {type: String},
-        type: {type: String},
-        description: {type: String}
-    }],
-      education: [{
-        institution: {type: String},
-        degree: {type: String},
-        field: {type: String},
-        graduation_date: {type: String},
-        gpa:{type:String},
-    }],
-}`;
-        
-        const response=await ai.chat.completions.create({
-              model: process.env.OPENAI_MODEL,
-             messages: [
-                  {   role: "system",
-                      content: systemPrompt},
-                  
-         {
-            role: "user",
-            content: userPrompt,
+        "proffesional_summary": "",
+        "skills": [],
+        "personal_info": {
+            "image": "",
+            "full_name": "",
+            "profession": "",
+            "email": "",
+            "phone": "",
+            "location": "",
+            "linkedin": "",
+            "website": ""
         },
-    ],
-    response_format: {type: "json_object"}
-})
-   const extractedData=response.choices[0].message.content;
-   const parsedData=JSON.parse(extractedData);
-   const newResume=await Resume.create({userId,title, ...parsedData})
+        "experience": [{
+            "company": "",
+            "position": "",
+            "start_date": "",
+            "end_date": "",
+            "description": "",
+            "is_current": false
+        }],
+        "project": [{
+            "name": "",
+            "type": "",
+            "description": ""
+        }],
+        "education": [{
+            "institution": "",
+            "degree": "",
+            "field": "",
+            "graduation_date": "",
+            "gpa": ""
+        }]
+        }`;
+        
+        const model = ai.getGenerativeModel({ model: process.env.OPENAI_MODEL });
+        
+        const response = await model.generateContent({
+            contents: [{
+                role: "user",
+                parts: [{
+                    text: userPrompt
+                }]
+            }],
+            systemInstruction: systemPrompt
+        });
 
-  res.status(201).json({resume: newResume})
+        const extractedData = response.response.text();
+        const parsedData = JSON.parse(extractedData);
+        const newResume = await Resume.create({userId, title, ...parsedData})
+
+        res.status(201).json({resume: newResume})
     } catch (error) {
         return res.status(400).json({message:error.message})
     }
