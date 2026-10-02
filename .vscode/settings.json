@@ -1,0 +1,10 @@
+{
+  "liveServer.settings.CustomBrowser": "chrome",
+  "livePreview.defaultPreviewBrowser": "external",
+  "workbench.externalBrowserPreviewFocus": true,
+  "livePreview.openPreviewTarget": "externalBrowser",
+  "liveServer.settings.useLocalIp": true,
+  "[html]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
+}

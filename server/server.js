@@ -17,7 +17,15 @@ const PORT = process.env.PORT || 3000;
 await connectDB();
 
 app.use(express.json());
-app.use(cors());
+
+app.use(cors({
+    origin: [
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "https://resume-builder-beige-theta.vercel.app"
+    ],
+    credentials: true
+}));
 
 // Serve uploaded files statically
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

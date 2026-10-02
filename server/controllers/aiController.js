@@ -15,20 +15,16 @@ export const enhanceResumeProSummary = async (req, res) => {
         
         const model = ai.getGenerativeModel({ model: process.env.OPENAI_MODEL });
         
-        const response = await model.generateContent({
-            contents: [{
-                role: "user",
-                parts: [{
-                    text: userContent
-                }]
-            }],
-            systemInstruction: "You are an expert in resume writing. Your task is to enhance the professional summary of a resume. The summary should be 1-2 sentences also highlight key skills, experiences and career objectives. Make it compelling and ATS-friendly. Only return text, no options or anything else."
-        });
+        const systemPrompt = "You are an expert in resume writing. Your task is to enhance the professional summary of a resume. The summary should be 1-2 sentences, highlight key skills, experiences and career objectives. Make it compelling and ATS-friendly. Only return the enhanced text, nothing else.";
+        const fullPrompt = `${systemPrompt}\n\nEnhance this professional summary: ${userContent}`;
+        
+        const response = await model.generateContent(fullPrompt);
 
         const enhancedContent = response.response.text();
         return res.status(200).json({enhancedContent})
     } catch (error) {
-        return res.status(400).json({message:error.message})
+        console.error("AI Error:", error);
+        return res.status(500).json({message: error.message || "Error enhancing summary"})
     }
 }
 
@@ -116,15 +112,8 @@ export const uploadResume = async (req, res) => {
         
         const model = ai.getGenerativeModel({ model: process.env.OPENAI_MODEL });
         
-        const response = await model.generateContent({
-            contents: [{
-                role: "user",
-                parts: [{
-                    text: userPrompt
-                }]
-            }],
-            systemInstruction: systemPrompt
-        });
+        const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;
+        const response = await model.generateContent(fullPrompt);
 
         const extractedData = response.response.text();
         const parsedData = JSON.parse(extractedData);
@@ -132,6 +121,7 @@ export const uploadResume = async (req, res) => {
 
         res.status(201).json({resume: newResume})
     } catch (error) {
-        return res.status(400).json({message:error.message})
+        console.error("Upload Resume Error:", error);
+        return res.status(500).json({message: error.message || "Error uploading resume"})
     }
 }
